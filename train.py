@@ -69,6 +69,7 @@ if __name__ == "__main__":
     # 生成 参数 对象
     paraphraser = Paraphraser(parameters)
     # 生成复述器 对象
+    # 更新parameters
     ce_result_valid = []
     kld_result_valid = []
     ce_result_train = []
