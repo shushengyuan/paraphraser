@@ -4,6 +4,7 @@ import os
 import numpy as np
 import torch as t
 from torch.optim import Adam
+# torch.optim是一个实现了多种优化算法的包，大多数通用的方法都已支持，提供了丰富的接口调用，未来更多精炼的优化算法也将整合进来。 
 
 import sample 
 from utils.batch_loader import BatchLoader
@@ -16,6 +17,14 @@ if __name__ == "__main__":
         当.py文件以模块形式被导入时，if __name__ == '__main__'之下的代码块不被运行。
     '''
     parser = argparse.ArgumentParser(description='Paraphraser')
+    '''
+    argparse 是python自带的命令行参数解析包，可以用来方便地读取命令行参数,
+    当你的代码需要频繁地修改参数的时候，使用这个工具可以将参数和代码分离开来,
+    让你的代码更简洁，适用范围更广。
+    
+    通过argparser.ArgumentParser函数生成argparser对象,
+    其中这个函数的description函数表示在命令行显示帮助信息的时候，这个程序的描述信息。
+    '''
     parser.add_argument('--num-iterations', type=int, default=60000, metavar='NI',
                         help='num iterations (default: 60000)')
     parser.add_argument('--batch-size', type=int, default=32, metavar='BS',
@@ -40,8 +49,9 @@ if __name__ == "__main__":
                     help='if include mscoco dataset (default: False)')
     parser.add_argument('--interm-sampling', default=False, type=bool, metavar='IS', 
                     help='if sample while training (default: False)')
-
+    # 以上是通过对象的add_argument函数来增加参数。
     args = parser.parse_args()
+    # 通过argpaser对象的parser_args函数来获取所有参数args
     
     datasets = set()
     if args.use_quora is True:
@@ -50,12 +60,15 @@ if __name__ == "__main__":
         datasets.add('snli')
     if args.use_coco is True:
         datasets.add('mscoco')
-
+    # 加载数据集
+    
     batch_loader = BatchLoader(datasets=datasets)
+    # 生成batch_loader 对象
     parameters = Parameters(batch_loader.max_seq_len,
                             batch_loader.vocab_size)
-
+    # 生成 参数 对象
     paraphraser = Paraphraser(parameters)
+    # 生成复述器 对象
     ce_result_valid = []
     kld_result_valid = []
     ce_result_train = []
@@ -69,7 +82,9 @@ if __name__ == "__main__":
         kld_result_valid = list(np.load('logs/kld_result_valid_{}.npy'.format(args.model_name)))
         ce_result_train = list(np.load('logs/ce_result_train_{}.npy'.format(args.model_name)))
         kld_result_train = list(np.load('logs/kld_result_train_{}.npy'.format(args.model_name)))
-
+        # load取出信息 
+        # format格式化，这里应该是填充字符串 ：model_name
+        
     if args.use_cuda:
         paraphraser = paraphraser.cuda()
 
@@ -77,10 +92,12 @@ if __name__ == "__main__":
         weight_decay=args.weight_decay)
 
     train_step = paraphraser.trainer(optimizer, batch_loader)
+    # 训练
     validate = paraphraser.validater(batch_loader)
+    # 验证
 
-    for iteration in range(args.num_iterations):
-
+    for iteration in range(args.num_iterations):    # 迭代 num_interations 次
+       
         cross_entropy, kld, coef = train_step(iteration, args.batch_size, args.use_cuda, args.dropout)
 
         ce_cur_train += [cross_entropy.data.cpu().numpy()]
@@ -143,7 +160,7 @@ if __name__ == "__main__":
             np.save('logs/ce_result_train_{}.npy'.format(args.model_name), np.array(ce_result_train))
             np.save('logs/kld_result_train_{}'.format(args.model_name), np.array(kld_result_train))
 
-        #interm sampling
+        # interm sampling 中间采样
         if (iteration % 20000 == 0 and iteration != 0) or iteration == (args.num_iterations - 1):
             if args.interm_sampling:
                 SAMPLE_FILES = ['snli_test', 'mscoco_test', 'quora_test', 'snips']
