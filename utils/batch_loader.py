@@ -65,8 +65,10 @@ class BatchLoader:
 
         # build vocabulary
         self.build_vocab(sentences)
-        
+    
+    ''' 以下是input block: 1 '''
     '''
+        number：0
         输出：encoder_input_source, encoder_input_target
     '''
     def get_encoder_input(self, sentences):
@@ -75,6 +77,7 @@ class BatchLoader:
             # 结尾加上 end_label
     
     '''
+        number：1
         输出：decoder_input_source, decoder_input_target
     '''
     def get_decoder_input(self, sentences): 
@@ -85,8 +88,10 @@ class BatchLoader:
         return [Variable(t.from_numpy(enc_inp)).float(), Variable(t.from_numpy(dec_inp)).float()]
         # return two decoder's inputs
         
-     '''
-        输出：the all inputs
+    '''
+        number: 2
+        output: the all inputs;
+                target;  
     '''
     def input_from_sentences(self, sentences):
         sentences = [[clean_str(s).split() for s in q] for q in sentences]
@@ -100,7 +105,9 @@ class BatchLoader:
                 target]
     
     '''
-        
+        quote:  2
+        number: 2.1
+        output: target_idx
     '''
     def get_target(self, sentences):
         sentences = sentences[1]    # sentences[1] means target
@@ -111,17 +118,21 @@ class BatchLoader:
         # target_onehot = self.get_onehot_wocab(target_idx)
         return Variable(t.from_numpy(np.array(target_idx, dtype=np.int64))).long()
 
+    ''' endblock:   1 '''
+    
     def get_raw_input_from_sentences(self, sentences):
         sentences = [clean_str(s).split() for s in sentences] 
         return Variable(t.from_numpy(self.embed_batch(sentences))).float()
 
+    ''' block:  2 '''
     
     def next_batch(self, batch_size, type, return_sentences=False, balanced=True):
         if type == 'train':
             file_id = 0
         if type == 'test':
             file_id = 1
-
+            
+        # introduce dataset
         if balanced:
             df = pd.DataFrame()
             length = batch_size//len(self.datasets)
@@ -137,18 +148,20 @@ class BatchLoader:
         sentences = [df['question1'].values, df['question2'].values]
         
         # swap source and target
+        # why random ?
         if np.random.rand() < 0.5: 
             sentences = [sentences[1], sentences[0]]
             # sentences[0] ：source
             # sentences[0] ：target 
-            
+        # quoto:    2    
         input = self.input_from_sentences(sentences)
 
         if return_sentences:
-            return input, [[clean_str(s).split() for s in q] for q in sentences]
+            return input, [[clean_str(s).split() for s in q] for q in sentences]    # ?
         else:
             return input
 
+        
     def next_batch_from_file(self, batch_size, file_name, return_sentences=False):
         if self.sampling_file_name is None \
             or self.sampling_file_name != file_name \
@@ -193,7 +206,9 @@ class BatchLoader:
             return input, [[clean_str(s).split() for s in q] for q in sentences]
         else:
             return input
-
+        
+    ''' endblock:   2 '''
+    
     # Original taken from https://github.com/facebookresearch/InferSent/blob/master/data.py
     def embed_batch(self, batch):
         max_len = np.max([len(x) for x in batch])
