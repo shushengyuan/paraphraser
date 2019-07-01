@@ -6,6 +6,7 @@ from torch.autograd import Variable
 import numpy as np
 import pandas as pd
 
+# 清洗数据
 def clean_str(string):
     '''
         Tokenization/string cleaning for all datasets except for SST.
@@ -37,16 +38,19 @@ class BatchLoader:
         '''
             Build vocab for sentences or for data files in path if None. 
         '''
+        # vocabulary
         self.vocab_size = vocab_size
         self.word_to_idx = {}
         self.idx_to_word = {}
         self.word_vec = {}
         self.max_seq_len = 0
 
+        # label
         self.unk_label = '<unk>'
         self.end_label = '</s>'
         self.go_label = '<s>'
 
+        # data
         self.df_from_file = None
         self.sampling_file_name = None
         self.datasets = datasets
@@ -55,24 +59,53 @@ class BatchLoader:
         self.mscoco_path = path + 'data/mscoco/'
         self.glove_path = '/home/aleksey.zotov/InferSent/dataset/GloVe/glove.840B.300d.txt'
 
+        # read data from dataset
         if sentences is None:
             self.read_train_test_dataset()
 
+        # build vocabulary
         self.build_vocab(sentences)
-
+        
+    '''
+        输出：encoder_input_source, encoder_input_target
+    '''
     def get_encoder_input(self, sentences):
         return [Variable(t.from_numpy(
             self.embed_batch([s + [self.end_label] for s in q]))).float() for q in sentences]
+            # 结尾加上 end_label
     
+    '''
+        输出：decoder_input_source, decoder_input_target
+    '''
     def get_decoder_input(self, sentences): 
         enc_inp = self.embed_batch([s + [self.end_label] for s in sentences[0]]) 
+        # input from encoder
         dec_inp = self.embed_batch([[self.go_label] + s for s in sentences[1]]) 
+        # input from decoder ?
         return [Variable(t.from_numpy(enc_inp)).float(), Variable(t.from_numpy(dec_inp)).float()]
+        # return two decoder's inputs
+        
+     '''
+        输出：the all inputs
+    '''
+    def input_from_sentences(self, sentences):
+        sentences = [[clean_str(s).split() for s in q] for q in sentences]
+        # clean
+        encoder_input_source, encoder_input_target = self.get_encoder_input(sentences)
+        decoder_input_source, decoder_input_target = self.get_decoder_input(sentences)
+        target = self.get_target(sentences)
+
+        return [encoder_input_source, encoder_input_target, 
+                decoder_input_source, decoder_input_target,
+                target]
     
+    '''
+        
+    '''
     def get_target(self, sentences):
-        sentences = sentences[1]
-        max_seq_len = np.max([len(s) for s in sentences]) + 1
-        target_idx = [[self.get_idx_by_word(w) for w in s] 
+        sentences = sentences[1]    # sentences[1] means target
+        max_seq_len = np.max([len(s) for s in sentences]) + 1   # sequence's length
+        target_idx = [[self.get_idx_by_word(w) for w in s]  
                         + [self.get_idx_by_word(self.end_label)] * (max_seq_len - len(s))
                         for s in sentences] 
         # target_onehot = self.get_onehot_wocab(target_idx)
@@ -82,17 +115,7 @@ class BatchLoader:
         sentences = [clean_str(s).split() for s in sentences] 
         return Variable(t.from_numpy(self.embed_batch(sentences))).float()
 
-    def input_from_sentences(self, sentences):
-        sentences = [[clean_str(s).split() for s in q] for q in sentences]
-        
-        encoder_input_source, encoder_input_target = self.get_encoder_input(sentences)
-        decoder_input_source, decoder_input_target = self.get_decoder_input(sentences)
-        target = self.get_target(sentences)
-
-        return [encoder_input_source, encoder_input_target, 
-                decoder_input_source, decoder_input_target,
-                target]
-
+    
     def next_batch(self, batch_size, type, return_sentences=False, balanced=True):
         if type == 'train':
             file_id = 0
@@ -116,7 +139,9 @@ class BatchLoader:
         # swap source and target
         if np.random.rand() < 0.5: 
             sentences = [sentences[1], sentences[0]]
-        
+            # sentences[0] ：source
+            # sentences[0] ：target 
+            
         input = self.input_from_sentences(sentences)
 
         if return_sentences:
