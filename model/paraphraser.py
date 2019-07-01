@@ -61,7 +61,8 @@ class Paraphraser(nn.Module):
     def learnable_parameters(self):
         return [p for p in self.parameters() if p.requires_grad]
         # learnable parameters
-
+        
+    # 训练器
     def trainer(self, optimizer, batch_loader):
         def train(i, batch_size, use_cuda, dropout):
             input = batch_loader.next_batch(batch_size, 'train')
@@ -76,7 +77,7 @@ class Paraphraser(nn.Module):
                     (encoder_input_source, encoder_input_target),
                     (decoder_input_source, decoder_input_target), 
                     z=None, use_cuda=use_cuda)
-            # out, final_state, kld
+            ''' out, final_state, kld '''
             logits = logits.view(-1, self.params.vocab_size)
             target = target.view(-1)
             cross_entropy = F.cross_entropy(logits, target)
@@ -88,9 +89,9 @@ class Paraphraser(nn.Module):
             loss.backward()
             optimizer.step()
 
-            return cross_entropy, kld, self.params.get_kld_coef(i)
+            return cross_entropy, kld, self.params.get_kld_coef(i)  # i?
 
-        return train
+        return train    # ?
 
     def validater(self, batch_loader):  # 验证器
         def get_samples(logits, target):
