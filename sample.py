@@ -10,7 +10,7 @@ from model.parameters import Parameters
 from model.paraphraser import Paraphraser
 
 def sample_with_input_file(batch_loader, paraphraser, args, input_file):
-    result, target, source, i = [], [] , [],  0
+    result, target, source, i = [], [], [],  0
     while True:
         next_batch = batch_loader.next_batch_from_file(batch_size=1,
          file_name=input_file, return_sentences=True)
@@ -104,10 +104,3 @@ if __name__ == "__main__":
     print('END')
 
 
-
-
-
-
-
-
-            

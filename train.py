@@ -11,7 +11,10 @@ from model.parameters import Parameters
 from model.paraphraser import Paraphraser
 
 if __name__ == "__main__":
-
+    '''
+        当.py文件被直接运行时，if __name__ == '__main__'之下的代码块将被运行；
+        当.py文件以模块形式被导入时，if __name__ == '__main__'之下的代码块不被运行。
+    '''
     parser = argparse.ArgumentParser(description='Paraphraser')
     parser.add_argument('--num-iterations', type=int, default=60000, metavar='NI',
                         help='num iterations (default: 60000)')
@@ -150,6 +153,7 @@ if __name__ == "__main__":
                 for sample_file in SAMPLE_FILES:
                     result, target, source = sample.sample_with_input_file(batch_loader,
                                                 paraphraser, args, sample_file)
+
 
                     sampled_file_dst = 'logs/intermediate/sampled_out_{}k_{}{}.txt'.format(
                                                 iteration//1000, sample_file, args.model_name)

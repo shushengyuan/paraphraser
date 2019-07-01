@@ -20,3 +20,5 @@ class Parameters:
 
     def get_kld_coef(self, i):
         return self.kld_penalty_weight * (math.tanh((i - 3500)/1000) + 1)/2.0
+        # KLsandu?
+

@@ -21,7 +21,7 @@ class Paraphraser(nn.Module):
         z=None, initial_state=None, use_cuda=True):
         """
         :param encoder_word_input: An list of 2 tensors with shape of [batch_size, seq_len] of Long type
-        :param decoder_word_input: An An list of 2 tensors with shape of [batch_size, max_seq_len + 1] of Long type
+        :param decoder_word_input: An list of 2 tensors with shape of [batch_size, max_seq_len + 1] of Long type
         :param initial_state: initial state of decoder rnn in order to perform sampling
 
         :param drop_prob: probability of an element of decoder input to be zeroed in sense of dropout
@@ -33,20 +33,24 @@ class Paraphraser(nn.Module):
                  final rnn state with shape of [num_layers, batch_size, decoder_rnn_size]
         """
 
-        if z is None:
+        if z is None:   # when z is not initial
             ''' Get context from encoder and sample z ~ N(mu, std)
             '''
             [batch_size, _, _] = encoder_input[0].size()
 
             mu, logvar = self.encoder(encoder_input[0], encoder_input[1])
+            # μ and σ
             std = t.exp(0.5 * logvar)
+            # make std > 0
             
             z = Variable(t.randn([batch_size, self.params.latent_variable_size]))
+            # 随机噪音码
             if use_cuda:
                 z = z.cuda()
-            z = z * std + mu
-
+            z = z * std + mu    # μ + σ*e
+            # z change into context vector
             kld = (-0.5 * t.sum(logvar - t.pow(mu, 2) - t.exp(logvar) + 1, 1)).mean().squeeze()
+            # 损失函数
         else:
             kld = None
 
@@ -56,6 +60,7 @@ class Paraphraser(nn.Module):
 
     def learnable_parameters(self):
         return [p for p in self.parameters() if p.requires_grad]
+        # learnable parameters
 
     def trainer(self, optimizer, batch_loader):
         def train(i, batch_size, use_cuda, dropout):
@@ -71,11 +76,11 @@ class Paraphraser(nn.Module):
                     (encoder_input_source, encoder_input_target),
                     (decoder_input_source, decoder_input_target), 
                     z=None, use_cuda=use_cuda)
-
+            # out, final_state, kld
             logits = logits.view(-1, self.params.vocab_size)
             target = target.view(-1)
             cross_entropy = F.cross_entropy(logits, target)
-
+            # 交叉熵
             loss = self.params.cross_entropy_penalty_weight * cross_entropy \
                 +  self.params.get_kld_coef(i) * kld
 
@@ -87,7 +92,7 @@ class Paraphraser(nn.Module):
 
         return train
 
-    def validater(self, batch_loader):
+    def validater(self, batch_loader):  # 验证器
         def get_samples(logits, target):
             '''
             logits: [batch, seq_len, vocab_size]
