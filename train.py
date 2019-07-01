@@ -76,6 +76,7 @@ if __name__ == "__main__":
     ce_cur_train = []
     kld_cur_train = []
 
+    # 如果训练过 xb
     if args.use_trained:
         paraphraser.load_state_dict(t.load('saved_models/trained_paraphraser_' + args.model_name))
         ce_result_valid = list(np.load('logs/ce_result_valid_{}.npy'.format(args.model_name)))
@@ -102,9 +103,12 @@ if __name__ == "__main__":
 
         ce_cur_train += [cross_entropy.data.cpu().numpy()]
         kld_cur_train += [kld.data.cpu().numpy()]
-
+        # GPU张量 ----> CPU张量 使用data.cpu()
+        # Tensor---->Numpy  可以使用 data.numpy()，data为Tensor变量
+        
         # validation
         if iteration % 500 == 0:
+            # 每500次取平均数相加
             ce_result_train += [np.mean(ce_cur_train)]
             kld_result_train += [np.mean(kld_cur_train)]
             ce_cur_train, kld_cur_train = [], []
@@ -122,10 +126,11 @@ if __name__ == "__main__":
             print('------------------------------')
 
 
-            # averaging across several batches
+            # averaging across several batches 几个批次的平均值
+            # 上面是train 的参数，下面是 validate的参数有
             cross_entropy, kld = [], []
             for i in range(20):
-                ce, kl, _ = validate(args.batch_size, args.use_cuda)
+                ce, kl, _ = validate(args.batch_size, args.use_cuda)    # ?
                 cross_entropy += [ce.data.cpu().numpy()]
                 kld += [kl.data.cpu().numpy()]
             
@@ -146,6 +151,7 @@ if __name__ == "__main__":
             
             for i in range(len(sampled)):
                 result = paraphraser.sample_with_pair(batch_loader, 20, args.use_cuda, s1[i], s2[i])
+                # 来自sample ，下面对于取出样本的参数输出？
                 print('source: ' + s1[i])
                 print('target: ' + s2[i])
                 print('valid: ' + sampled[i])
@@ -154,13 +160,15 @@ if __name__ == "__main__":
 
         # save model
         if (iteration % 10000 == 0 and iteration != 0) or iteration == (args.num_iterations - 1):
+            # 10000 或者 达到num_iterations 时 save data
             t.save(paraphraser.state_dict(), 'saved_models/trained_paraphraser_' + args.model_name)
             np.save('logs/ce_result_valid_{}.npy'.format(args.model_name), np.array(ce_result_valid))
             np.save('logs/kld_result_valid_{}'.format(args.model_name), np.array(kld_result_valid))
             np.save('logs/ce_result_train_{}.npy'.format(args.model_name), np.array(ce_result_train))
             np.save('logs/kld_result_train_{}'.format(args.model_name), np.array(kld_result_train))
 
-        # interm sampling 中间采样
+        # interm sampling 中间采样?
+        # save sample
         if (iteration % 20000 == 0 and iteration != 0) or iteration == (args.num_iterations - 1):
             if args.interm_sampling:
                 SAMPLE_FILES = ['snli_test', 'mscoco_test', 'quora_test', 'snips']
