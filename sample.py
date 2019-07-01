@@ -77,6 +77,7 @@ if __name__ == "__main__":
 
     paraphraser = Paraphraser(parameters)
     paraphraser.load_state_dict(t.load('saved_models/trained_paraphraser_' + args.model_name))
+    # 自己导入模型的结构信息
     if args.use_cuda:
         paraphraser = paraphraser.cuda()
 
