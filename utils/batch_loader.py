@@ -152,7 +152,7 @@ class BatchLoader:
         if np.random.rand() < 0.5: 
             sentences = [sentences[1], sentences[0]]
             # sentences[0] ：source
-            # sentences[0] ：target 
+            # sentences[1] ：target 
         # quoto:    2    
         input = self.input_from_sentences(sentences)
 
@@ -249,9 +249,12 @@ class BatchLoader:
         ix = np.random.choice(range(self.vocab_size), p=distribution.ravel())
         return self.idx_to_word[ix]
 
+    '''找到最像的词'''
     def likely_word_from_distribution(self, distribution):
         assert distribution.shape[-1] == self.vocab_size
         ix = np.argmax(distribution.ravel())
+        # argmax返回的是最大数的索引
+        # 将多维数组降位为一维
         return self.idx_to_word[ix]
     
     def get_onehot_vocab(self, ids):
@@ -276,6 +279,7 @@ class BatchLoader:
 
     def build_glove(self, word_dict):
         # create word_vec with glove vectors
+        
         with open(self.glove_path) as f:
             for line in f:
                 word, vec = line.split(' ', 1)
