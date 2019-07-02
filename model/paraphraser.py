@@ -117,8 +117,10 @@ class Paraphraser(nn.Module):
             for i in range(prediction.shape[0]):
                 sampled  += [' '.join([batch_loader.sample_word_from_distribution(d) 
                     for d in prediction[i]])]
+                # get word from prediction by distribution
                 expected += [' '.join([batch_loader.get_word_by_idx(idx) for idx in target[i]])]
-
+                # get word from target by index
+                
             return sampled, expected
 
 
@@ -155,7 +157,8 @@ class Paraphraser(nn.Module):
             return cross_entropy, kld, (sampled, s1, s2)
 
         return validate
-
+    
+'''有sample 的input?'''
     def sample_with_input(self, batch_loader, seq_len, use_cuda, use_mean, input):
         [encoder_input_source, encoder_input_target, decoder_input_source, _, _] = input
 
@@ -178,7 +181,8 @@ class Paraphraser(nn.Module):
         initial_state = self.decoder.build_initial_state(decoder_input_source)
 
         decoder_input = batch_loader.get_raw_input_from_sentences([batch_loader.go_label])
-
+        # 先给decoder_input加开始的label
+        
         result = ''
         for i in range(seq_len):
             if use_cuda: 
@@ -195,11 +199,13 @@ class Paraphraser(nn.Module):
             result += ' ' + word
 
             decoder_input = batch_loader.get_raw_input_from_sentences([word])
-
+            # 只经过清洗的数据 raw data
+            # decoder_input = end_label
+            
         return result
 
     def sample_with_pair(self, batch_loader, seq_len, use_cuda, source_sent, target_sent):
-        input = batch_loader.input_from_sentences([[source_sent], [target_sent]])
+        input = batch_loader.input_from_sentences([[source_sent], [target_sent]])   # source sentence and target sentence
         input = [var.cuda() if use_cuda else var for var in input]
         return self.sample_with_input(batch_loader, seq_len, use_cuda, False, input)
 
