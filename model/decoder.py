@@ -97,9 +97,10 @@ class Decoder(nn.Module):
         '''
             decoder rnn is conditioned on context via additional bias = W_cond * z to every input token
         '''
-        decoder_input = F.dropout(decoder_input, drop_prob) # dropout but what is drop_prob?
+        decoder_input = F.dropout(decoder_input, drop_prob) # dropout,drop_prob means 不保留节点数的比例
 
         z = t.cat([z] * seq_len, 1).view(batch_size, seq_len, self.params.latent_variable_size)
+        # seq_len z connect together as the input metrix
         # Cat对数据沿着某一维度进行拼接。cat后数据的总维数不变.比如下面代码对两个2维tensor（分别为2*3,1*3）进行拼接，拼接完后变为3*3还是2维的tensor。
         # torch.cat((x,y),0) 0 means row , 1 means column ,2 means z?
         decoder_input = t.cat([decoder_input, z], 2)
