@@ -84,13 +84,20 @@ class Decoder(nn.Module):
             assert not encoder_input is None    # if encoder_input is none , then give AssertionError
             initial_state = self.build_initial_state(encoder_input)
 
-        [batch_size, seq_len, _] = decoder_input.size()
+        [batch_size, seq_len, _] = decoder_input.size() 
+        '''
+            a.size()
+        >>> torch.Size([2, 3])
+            [b,c] = a.size()
+        >>> b = 2
+        >>> c = 3
+        '''
 
         # print(initial_state[0].size())
         '''
             decoder rnn is conditioned on context via additional bias = W_cond * z to every input token
         '''
-        decoder_input = F.dropout(decoder_input, drop_prob) # dropout
+        decoder_input = F.dropout(decoder_input, drop_prob) # dropout but what is drop_prob?
 
         z = t.cat([z] * seq_len, 1).view(batch_size, seq_len, self.params.latent_variable_size)
         # Cat对数据沿着某一维度进行拼接。cat后数据的总维数不变.比如下面代码对两个2维tensor（分别为2*3,1*3）进行拼接，拼接完后变为3*3还是2维的tensor。
