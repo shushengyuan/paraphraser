@@ -166,7 +166,12 @@ class Paraphraser(nn.Module):
 
         # encode
         [batch_size, _, _] = encoder_input[0].size()
-
+        '''
+        >>> a[0].size()
+        torch.Size([3, 5, 6])
+        >>> a.size()
+        torch.Size([2, 3, 5, 6])
+        '''
         mu, logvar = self.encoder(encoder_input[0], encoder_input[1])
         std = t.exp(0.5 * logvar)
             
