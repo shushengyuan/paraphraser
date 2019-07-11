@@ -104,7 +104,7 @@ class Decoder(nn.Module):
         # Cat对数据沿着某一维度进行拼接。cat后数据的总维数不变.比如下面代码对两个2维tensor（分别为2*3,1*3）进行拼接，拼接完后变为3*3还是2维的tensor。
         # torch.cat((x,y),0) 0 means row , 1 means column ,2 means z?
         decoder_input = t.cat([decoder_input, z], 2)
-
+        # it seems that connect the input as condition
         rnn_out, final_state = self.decoding_rnn(decoder_input, initial_state)
 
         rnn_out = rnn_out.contiguous().view(-1, self.params.decoder_rnn_size)
